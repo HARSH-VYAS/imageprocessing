@@ -19,3 +19,5 @@ app.use('/image',routes);
 app.listen(port,()=>{
     console.log(`Server started at localhost :${port}`);
 });
+
+export default app;
