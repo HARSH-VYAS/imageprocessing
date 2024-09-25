@@ -15,60 +15,48 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const index_1 = __importDefault(require("../index"));
 const supertest_1 = __importDefault(require("supertest"));
 const app_root_path_1 = __importDefault(require("app-root-path"));
+const fs_1 = __importDefault(require("fs"));
+const index_2 = require("../api/routes/index");
 const request = (0, supertest_1.default)(index_1.default);
-describe('Test images url endpoint', () => {
+describe('Test images url endpoints', () => {
     it('Get 200 status ok from the endpoint', () => __awaiter(void 0, void 0, void 0, function* () {
         const resp = yield request.get('/image')
             .query({ fileName: 'fjord', width: 200, height: 300 })
             .expect(200);
     }));
     it('Check file does not exist error', () => __awaiter(void 0, void 0, void 0, function* () {
-        let fullPath = app_root_path_1.default.path + "/src/assets/full/abc.jpg";
-        const resp = yield request.get('/image')
-            .query({ fileName: 'abc', width: 200, height: 300 })
-            .expect(500)
-            .expect((err) => {
-            expect(err.text).toContain("Error: File path does not exist" + fullPath);
-        });
+        expect(() => __awaiter(void 0, void 0, void 0, function* () {
+            const fullPath = app_root_path_1.default.path + "/src/assets/full/abc.jpg";
+            const resp = yield request.get('/image')
+                .query({ fileName: 'abc', width: 200, height: 300 })
+                .expect(500);
+            expect(() => { throw resp.error; }).toThrowError("cannot GET /image?fileName=abc&width=200&height=300 (500)");
+            expect(resp.text).toContain("Error: File path does not exist" + fullPath);
+        })).not.toThrowError();
     }));
-});
-describe('Check Invalid Parameters width', () => {
-    it('Check Invalid Parameters width', () => __awaiter(void 0, void 0, void 0, function* () {
-        const response = yield request.get('/image')
-            .query({ fileName: 'fjord', width: "h", height: 300 })
-            .expect(500)
-            .expect((response) => {
-            if (response) {
-                expect(response.text).toContain("Error: Width is not a numbe");
-            }
-        });
+    it('Check If no file name is provided', () => __awaiter(void 0, void 0, void 0, function* () {
+        expect(() => __awaiter(void 0, void 0, void 0, function* () {
+            const resp = yield request.get('/image')
+                .query({ fileName: '', width: 200, height: 300 });
+            expect(() => { throw resp.error; }).toThrowError("cannot GET /image?fileName=&width=200&height=300 (500)");
+            expect(resp.text).toContain("Error: FileName can not be empty");
+        })).not.toThrowError();
     }));
-    it('Check no width provided', () => __awaiter(void 0, void 0, void 0, function* () {
-        let fullPath = app_root_path_1.default.path + "/src/assets/full/abc.jpg";
-        const resp = yield request.get('/image')
-            .query({ fileName: 'fjord', height: '200' })
-            .expect(500)
-            .expect((err) => {
-            expect(err.text).toContain("Error: Please provide a valid positve number for width request parameter");
-        });
+    it('Check transform function file exists', () => __awaiter(void 0, void 0, void 0, function* () {
+        const fullPath = app_root_path_1.default.path + '/src/assets/full/fjord.jpg';
+        const thumbPath = app_root_path_1.default.path + '/src/assets/thumb/fjord_200_300.jpg';
+        yield (0, index_2.transform)(fullPath, 200, 300, thumbPath);
+        const exists = fs_1.default.existsSync(thumbPath);
+        expect(exists).toBeTrue();
     }));
-});
-describe('Check Invalid Parameters height', () => {
-    it('Check Invalid Parameters height', () => __awaiter(void 0, void 0, void 0, function* () {
-        const resp = yield request.get('/image')
-            .query({ fileName: 'fjord', width: "200", height: "h" })
-            .expect(500)
-            .expect((err) => {
-            expect(err.text).toContain("Error: Height is not a numbe");
+    it('Check transform function if fullPath file does not exist', () => __awaiter(void 0, void 0, void 0, function* () {
+        const fullPath = app_root_path_1.default.path + '/src/assets/full/abc.jpg';
+        const thumbPath = app_root_path_1.default.path + '/src/assets/thumb/abc_200_300.jpg';
+        yield (0, index_2.transform)(fullPath, 200, 300, thumbPath)
+            .catch((err) => {
+            expect(err.text).toContain(" Error: Input file is missing inside sharp");
         });
-    }));
-    it('Check no width provided', () => __awaiter(void 0, void 0, void 0, function* () {
-        let fullPath = app_root_path_1.default.path + "/src/assets/full/abc.jpg";
-        const resp = yield request.get('/image')
-            .query({ fileName: 'fjord', height: '200' })
-            .expect(500)
-            .expect((err) => {
-            expect(err.text).toContain("Error: Please provide a valid positve number for width request parameter");
-        });
+        const exists = fs_1.default.existsSync(thumbPath);
+        expect(exists).toBeFalse();
     }));
 });

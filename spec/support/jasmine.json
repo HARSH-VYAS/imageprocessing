@@ -1,12 +1,14 @@
 {
     "spec_dir": "build/tests",
     "spec_files": [
-        "**/*[sS]pec.js"
+        "**/*[sS]pec.?(m)js"
     ],
-    "helpers": [
-        "helpers/**/*.js",
-        "asserts/**/*.jpg"
-    ],
-    "stopSpecOnExpectationFailure": false,
-    "random": false
+  "helpers": [
+    "helpers/**/*.?(m)js",
+    "assets/**/*.jpg"
+  ],
+    "env": {
+        "stopSpecOnExpectationFailure": false,
+        "random": true
+      }
 }

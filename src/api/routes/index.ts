@@ -3,108 +3,64 @@ import sharp from 'sharp';
 import path, { resolve } from 'path';
 import fs from 'fs';
 import RootPath from 'app-root-path';
-import { errorMonitor } from 'events';
-import { isEmpty } from 'lodash';
-import { ParsedQs } from 'qs';
+import handleError from '../../helper/errorhandler'
+import { reject } from 'lodash';
 
 const routes = express.Router();
-const full_path = 'src/assets/full/';
-const thumb_path ='src/assets/thumb/';
 
-routes.get('/', (req, resp)=>
-{
-    let rootPath = RootPath.path;
-    try
-    {
+routes.get('/', handleError, (req: express.Request, resp: express.Response): void => {
 
-    let fileName = req.query.fileName;
-    let fullPath = (path.join(rootPath, full_path,`${fileName}.jpg`));
-    
-    if(!fs.existsSync(fullPath))
-    {
-        throw new Error("File path does not exist" + fullPath);
-    }
+    const fileName = req.query.fileName;
+    const width: number = Number(req.params.width);
+    const height: number = Number(req.params.height);
+    const existingPath = path.join(RootPath.path, 'src/assets/full/', `${fileName}.jpg`);
+    const newFilePath = path.join(RootPath.path, 'src/assets/thumb/', `${fileName}_${width}_${height}.jpg`);
 
-    let width:number = getWidth(req.query.width);
-    let height:number = getHeight(req.query.height);
-    const newFilePath = path.join(rootPath, thumb_path,`${fileName}_${width}_${height}.jpg`);
+    transform(existingPath, width, height, newFilePath)
+        .then(() => {
+            checkFileExists(newFilePath)
+                .then(
+                    () => resp.status(200).sendFile(newFilePath,
+                        (err: Error) => {
+                            if (err)
+                                throw err;
+                        }))
+                .catch((error) => {
+                    throw new Error("Process timed out while checking the file exists" + error);
+                });
 
-    sharp(path.join(rootPath, full_path ,`${fileName}.jpg`))
-        .resize(width,height)
-        .toFile(newFilePath,
-        (error:Error): void=>
-        {
-            if(error)
-              throw error; 
-           
+        }).catch((error) => {
+            throw new Error("There was some problem processing the file" + error);
         });
 
-    checkFileExists(newFilePath)
-    .then(
-        ()=>resp.status(200).sendFile(newFilePath,
-        (err:Error)=>{
-            if(err)
-                throw err;
-        }));
-    }
-    catch(error)
-    {
-      throw error;
-    }
-        
 });
 
-function checkFileExists(filePath:string)
-{
-    return new Promise<void>((resolve)=>{
-        const intervalId = setInterval(
-            ()=>{
-                if(fs.existsSync(filePath))
-                {
-                    console.log("Now file is created");
-                    clearInterval(intervalId);
-                    resolve();
-                }
+export async function transform(fullPath: string, width: number, height: number, thumbpath: string): Promise<void> {
 
-            },1000
-        )
+    return new Promise<void>((resolve) => {
+        sharp(fullPath)
+            .resize(width, height)
+            .toFile(thumbpath)
+            .catch((error) => {
+                throw new Error("Input file is missing inside sharp" + error);
+            });
+        resolve();
     });
 }
 
 
-function getWidth(width: string | ParsedQs | string[] | ParsedQs[] | undefined)
-{
-    try{
-        if(isEmpty(width))
-            throw new Error("Please provide a valid positve number for width request parameter");
-
-        if(isNaN(Number(width)))
-            throw new Error("Width is not a number");
-            
-        return Number(width);
-    }
-    catch(err)
-    {
-        throw err;
-    }
+function checkFileExists(filePath: string): Promise<void> {
+    return new Promise<void>((resolve) => {
+        const intervalId = setInterval(
+            () => {
+                if (fs.existsSync(filePath)) {
+                    console.log("New file is created");
+                    clearInterval(intervalId);
+                    resolve();
+                }
+            }
+            , 1000);
+    });
 }
 
-
-function getHeight(height: string | ParsedQs | string[] | ParsedQs[] | undefined)
-{
-    try{
-        if(isEmpty(height))
-            throw new Error("Please provide a valid positve number for Height request parameter");
-
-        if(isNaN(Number(height)))
-            throw new Error("Height is not a number");
-            
-        return Number(height);
-    }
-    catch(err)
-    {
-        throw err;
-    }
-}
-
-export default routes;       
+export default routes;   

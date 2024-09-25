@@ -1,16 +1,12 @@
-import express, { response } from 'express';
+import RootPath from 'app-root-path';
+import express from 'express';
 import path from 'path';
-
-import sharp from 'sharp';
-import routes from './api/routes';
+import routes from './api/routes/index';
 
 const app = express();
 const port = 3000;
 
-const full_path = path.join(__dirname,'assets/full');
-const thumb_path = path.join(__dirname,'assets/thumb');
-
-app.use(express.static(thumb_path));
+app.use(express.static(path.join(RootPath.path,'src/assets/thumb')));
 
 app.use('/image',routes);
 
