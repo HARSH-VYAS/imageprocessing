@@ -11,7 +11,8 @@
 #How the resizing woks. 
 
 We have used #sharp node dependcy module to resize the images. 
-APIS provided by  sharp are pretty stright forward and easy to use. 
+APIS provided by  sharp are pretty stright forward and easy to use.
+Middleware function is written in helper/errorhandler.ts file
 
 Please look at routes.ts file under src/api/ folder for more information on how its used. 
 
@@ -21,6 +22,6 @@ As mentioned above the build scripts are already added in package.json file so w
 
 npm run test
 
-All the tests are written in indexSpec.ts file under src/tests folder. 
+All the tests are written in indexSpec.ts, widthSpec.ts, heightSpec.ts file under src/tests folder will run.  
 
 
