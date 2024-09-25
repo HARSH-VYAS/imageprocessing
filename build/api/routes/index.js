@@ -17,50 +17,67 @@ const express_1 = __importDefault(require("express"));
 const sharp_1 = __importDefault(require("sharp"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
-const app_root_path_1 = __importDefault(require("app-root-path"));
 const errorhandler_1 = __importDefault(require("../../helper/errorhandler"));
 const routes = express_1.default.Router();
 routes.get('/', errorhandler_1.default, (req, resp) => {
     const fileName = req.query.fileName;
     const width = Number(req.params.width);
     const height = Number(req.params.height);
-    const existingPath = path_1.default.join(app_root_path_1.default.path, 'src/assets/full/', `${fileName}.jpg`);
-    const newFilePath = path_1.default.join(app_root_path_1.default.path, 'src/assets/thumb/', `${fileName}_${width}_${height}.jpg`);
-    transform(existingPath, width, height, newFilePath)
-        .then(() => {
-        checkFileExists(newFilePath)
-            .then(() => resp.status(200).sendFile(newFilePath, (err) => {
-            if (err)
-                throw err;
-        }))
-            .catch((error) => {
-            throw new Error("Process timed out while checking the file exists" + error);
-        });
-    }).catch((error) => {
-        throw new Error("There was some problem processing the file" + error);
+    const existingPath = path_1.default.join(__dirname, '../../../assets/full/', `${fileName}.jpg`);
+    const newFilePath = path_1.default.join(__dirname, '../../../assets/thumb/', `${fileName}_${width}_${height}.jpg`);
+    fs_1.default.access(newFilePath, fs_1.default.constants.F_OK, (err) => {
+        if (!err) {
+            console.log("came here to resolve");
+            resp.status(200).sendFile(newFilePath); // File exists and is accessible
+        }
+        else {
+            transform(existingPath, width, height, newFilePath)
+                .then(() => {
+                checkFileAccessTillCreation(newFilePath)
+                    .then((exist) => {
+                    if (exist) {
+                        resp.status(200).sendFile(newFilePath, (err) => {
+                            if (err)
+                                throw err;
+                        });
+                    }
+                })
+                    .catch((error) => {
+                    throw new Error("Process timed out while checking the file exists" + error);
+                });
+            })
+                .catch((reject) => {
+                reject(new Error("There was some problem processing the file"));
+            });
+        }
     });
 });
 function transform(fullPath, width, height, thumbpath) {
     return __awaiter(this, void 0, void 0, function* () {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             (0, sharp_1.default)(fullPath)
                 .resize(width, height)
                 .toFile(thumbpath)
+                .then(() => { resolve(); })
                 .catch((error) => {
-                throw new Error("Input file is missing inside sharp" + error);
+                reject(error);
             });
-            resolve();
         });
     });
 }
-function checkFileExists(filePath) {
+function checkFileAccessTillCreation(filePath) {
     return new Promise((resolve) => {
         const intervalId = setInterval(() => {
-            if (fs_1.default.existsSync(filePath)) {
-                console.log("New file is created");
-                clearInterval(intervalId);
-                resolve();
-            }
+            fs_1.default.access(filePath, fs_1.default.constants.F_OK, (err) => {
+                if (err) {
+                    resolve(false); // File does not exist or is inaccessible
+                }
+                else {
+                    clearInterval(intervalId);
+                    console.log("New file is created");
+                    resolve(true); // File exists and is accessible
+                }
+            });
         }, 1000);
     });
 }

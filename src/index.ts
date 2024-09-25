@@ -6,7 +6,7 @@ import routes from './api/routes/index';
 const app = express();
 const port = 3000;
 
-app.use(express.static(path.join(RootPath.path,'src/assets/thumb')));
+app.use(express.static(path.join(__dirname,'../assets/thumb')));
 
 app.use('/image',routes);
 

@@ -5,13 +5,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
-const app_root_path_1 = __importDefault(require("app-root-path"));
 const lodash_1 = require("lodash");
 const handleError = (req, resp, next) => {
     const fileName = req.query.fileName;
     const width = getWidth(req.query.width);
     const height = getHeight(req.query.height);
-    const existingPath = path_1.default.join(app_root_path_1.default.path, 'src/assets/full/', `${fileName}.jpg`);
+    const existingPath = path_1.default.join(__dirname, '../../assets/full/', `${fileName}.jpg`);
     if ((0, lodash_1.isEmpty)(fileName)) {
         throw new Error("FileName can not be empty");
     }

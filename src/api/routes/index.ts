@@ -13,51 +13,72 @@ routes.get('/', handleError, (req: express.Request, resp: express.Response): voi
     const fileName = req.query.fileName;
     const width: number = Number(req.params.width);
     const height: number = Number(req.params.height);
-    const existingPath = path.join(RootPath.path, 'src/assets/full/', `${fileName}.jpg`);
-    const newFilePath = path.join(RootPath.path, 'src/assets/thumb/', `${fileName}_${width}_${height}.jpg`);
+    const existingPath = path.join(__dirname, '../../../assets/full/', `${fileName}.jpg`);
+    const newFilePath = path.join(__dirname, '../../../assets/thumb/', `${fileName}_${width}_${height}.jpg`);
 
-    transform(existingPath, width, height, newFilePath)
-        .then(() => {
-            checkFileExists(newFilePath)
-                .then(
-                    () => resp.status(200).sendFile(newFilePath,
-                        (err: Error) => {
-                            if (err)
-                                throw err;
-                        }))
-                .catch((error) => {
-                    throw new Error("Process timed out while checking the file exists" + error);
-                });
+    fs.access(newFilePath
+        , fs.constants.F_OK,
+        (err) => {
+            if (!err) {
+                resp.status(200).sendFile(newFilePath); // File exists and is accessible
+            }
+            else {
+                transform(existingPath, width, height, newFilePath)
+                    .then(() => {
+                        checkFileAccessTillCreation(newFilePath)
+                            .then(
+                                (exist) => {
+                                    if (exist) {
+                                        resp.status(200).sendFile(newFilePath,
+                                            (err: Error) => {
+                                                if (err)
+                                                    throw err;
+                                            });
+                                    }
+                                })
+                            .catch((error) => {
+                                throw new Error("Process timed out while checking the file exists" + error);
+                            });
 
-        }).catch((error) => {
-            throw new Error("There was some problem processing the file" + error);
+                    })
+                    .catch((reject) => {
+                        reject(new Error("There was some problem processing the file"));
+                    });
+
+            }
         });
 
 });
 
 export async function transform(fullPath: string, width: number, height: number, thumbpath: string): Promise<void> {
 
-    return new Promise<void>((resolve) => {
-        sharp(fullPath)
-            .resize(width, height)
-            .toFile(thumbpath)
-            .catch((error) => {
-                throw new Error("Input file is missing inside sharp" + error);
-            });
-        resolve();
-    });
+    return new Promise<void>(
+        (resolve, reject) => {
+            sharp(fullPath)
+                .resize(width, height)
+                .toFile(thumbpath)
+                .then(() => { resolve(); })
+                .catch((error) => 
+                {
+                    reject(error);
+                });
+        });
 }
 
 
-function checkFileExists(filePath: string): Promise<void> {
-    return new Promise<void>((resolve) => {
+function checkFileAccessTillCreation(filePath: string): Promise<boolean> {
+    return new Promise<boolean>((resolve) => {
         const intervalId = setInterval(
             () => {
-                if (fs.existsSync(filePath)) {
-                    console.log("New file is created");
-                    clearInterval(intervalId);
-                    resolve();
-                }
+                fs.access(filePath, fs.constants.F_OK, (err) => {
+                    if (err) {
+                        resolve(false); // File does not exist or is inaccessible
+                    } else {
+                        clearInterval(intervalId);
+                        console.log("New file is created");
+                        resolve(true); // File exists and is accessible
+                    }
+                });
             }
             , 1000);
     });

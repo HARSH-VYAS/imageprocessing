@@ -10,7 +10,7 @@ const handleError = (req: express.Request, resp: express.Response, next: Functio
     const fileName = req.query.fileName;
     const width: number = getWidth(req.query.width);
     const height: number = getHeight(req.query.height);
-    const existingPath = path.join(RootPath.path, 'src/assets/full/', `${fileName}.jpg`);
+    const existingPath = path.join(__dirname , '../../assets/full/', `${fileName}.jpg`);
 
     if (isEmpty(fileName)) {
         throw new Error("FileName can not be empty");

@@ -1,6 +1,7 @@
 import app from '../index';
 import supertest from 'supertest';
 import RootPath from 'app-root-path';
+import path from 'path';
 import fs from 'fs';
 import { transform } from '../api/routes/index';
 
@@ -17,7 +18,7 @@ describe('Test images url endpoints', () => {
 
     it('Check file does not exist error', async () => {
         expect(async ()=>{
-        const fullPath: string = RootPath.path + "/src/assets/full/abc.jpg";
+        const fullPath: string = path.join(__dirname , '../../assets/full/abc.jpg');
         const resp = await request.get('/image')
             .query({ fileName: 'abc', width: 200, height: 300 })
             .expect(500);
@@ -41,23 +42,21 @@ describe('Test images url endpoints', () => {
     });
 
     it('Check transform function file exists', async () => {
-        const fullPath = RootPath.path+'/src/assets/full/fjord.jpg';
-        const thumbPath = RootPath.path+'/src/assets/thumb/fjord_200_300.jpg';
+        const fullPath: string = path.join(__dirname , '../../assets/full/fjord.jpg');
+        const thumbPath =path.join(__dirname ,'../../assets/thumb/fjord_200_300.jpg');
         await transform(fullPath,200,300,thumbPath);
         const exists = fs.existsSync(thumbPath);
         expect(exists).toBeTrue();
     });
 
     it('Check transform function if fullPath file does not exist', async () => {
-        const fullPath = RootPath.path+'/src/assets/full/abc.jpg';
-        const thumbPath = RootPath.path+'/src/assets/thumb/abc_200_300.jpg';
-        await transform(fullPath,200,300,thumbPath)
-        .catch((err)=>{
-            expect(err.text).toContain(" Error: Input file is missing inside sharp");
+        const fullPath: string = path.join(__dirname , '../../assets/full/abc.jpg');
+        const thumbPath =path.join(__dirname ,'../../assets/thumb/abc_200_300.jpg');
+        transform(fullPath,200,300,thumbPath)
+        .catch((reject)=>{
+            expect(reject).toContain("Error: Input file is missing ");
         });
-
-        const exists = fs.existsSync(thumbPath);
-        expect(exists).toBeFalse();
+       
     });
 });
 

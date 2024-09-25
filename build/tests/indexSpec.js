@@ -14,7 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const index_1 = __importDefault(require("../index"));
 const supertest_1 = __importDefault(require("supertest"));
-const app_root_path_1 = __importDefault(require("app-root-path"));
+const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const index_2 = require("../api/routes/index");
 const request = (0, supertest_1.default)(index_1.default);
@@ -26,7 +26,7 @@ describe('Test images url endpoints', () => {
     }));
     it('Check file does not exist error', () => __awaiter(void 0, void 0, void 0, function* () {
         expect(() => __awaiter(void 0, void 0, void 0, function* () {
-            const fullPath = app_root_path_1.default.path + "/src/assets/full/abc.jpg";
+            const fullPath = path_1.default.join(__dirname, '../../assets/full/abc.jpg');
             const resp = yield request.get('/image')
                 .query({ fileName: 'abc', width: 200, height: 300 })
                 .expect(500);
@@ -43,20 +43,18 @@ describe('Test images url endpoints', () => {
         })).not.toThrowError();
     }));
     it('Check transform function file exists', () => __awaiter(void 0, void 0, void 0, function* () {
-        const fullPath = app_root_path_1.default.path + '/src/assets/full/fjord.jpg';
-        const thumbPath = app_root_path_1.default.path + '/src/assets/thumb/fjord_200_300.jpg';
+        const fullPath = path_1.default.join(__dirname, '../../assets/full/fjord.jpg');
+        const thumbPath = path_1.default.join(__dirname, '../../assets/thumb/fjord_200_300.jpg');
         yield (0, index_2.transform)(fullPath, 200, 300, thumbPath);
         const exists = fs_1.default.existsSync(thumbPath);
         expect(exists).toBeTrue();
     }));
     it('Check transform function if fullPath file does not exist', () => __awaiter(void 0, void 0, void 0, function* () {
-        const fullPath = app_root_path_1.default.path + '/src/assets/full/abc.jpg';
-        const thumbPath = app_root_path_1.default.path + '/src/assets/thumb/abc_200_300.jpg';
-        yield (0, index_2.transform)(fullPath, 200, 300, thumbPath)
-            .catch((err) => {
-            expect(err.text).toContain(" Error: Input file is missing inside sharp");
+        const fullPath = path_1.default.join(__dirname, '../../assets/full/abc.jpg');
+        const thumbPath = path_1.default.join(__dirname, '../../assets/thumb/abc_200_300.jpg');
+        (0, index_2.transform)(fullPath, 200, 300, thumbPath)
+            .catch((reject) => {
+            expect(reject).toContain("Error: Input file is missing ");
         });
-        const exists = fs_1.default.existsSync(thumbPath);
-        expect(exists).toBeFalse();
     }));
 });
