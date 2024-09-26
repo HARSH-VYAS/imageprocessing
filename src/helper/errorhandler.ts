@@ -1,7 +1,6 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
-import RootPath from 'app-root-path';
 import { isEmpty } from 'lodash';
 import { ParsedQs } from 'qs';
 

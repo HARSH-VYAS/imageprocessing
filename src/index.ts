@@ -1,4 +1,3 @@
-import RootPath from 'app-root-path';
 import express from 'express';
 import path from 'path';
 import routes from './api/routes/index';

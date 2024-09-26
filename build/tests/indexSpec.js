@@ -17,12 +17,17 @@ const supertest_1 = __importDefault(require("supertest"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const index_2 = require("../api/routes/index");
+const sharp_1 = __importDefault(require("sharp"));
 const request = (0, supertest_1.default)(index_1.default);
 describe('Test images url endpoints', () => {
     it('Get 200 status ok from the endpoint', () => __awaiter(void 0, void 0, void 0, function* () {
         const resp = yield request.get('/image')
             .query({ fileName: 'fjord', width: 200, height: 300 })
             .expect(200);
+        // Check if response body is an image using Sharp
+        const ibuffer = resp.body;
+        const imetadata = yield (0, sharp_1.default)(ibuffer).metadata();
+        expect(imetadata.format).toBe('jpeg');
     }));
     it('Check file does not exist error', () => __awaiter(void 0, void 0, void 0, function* () {
         expect(() => __awaiter(void 0, void 0, void 0, function* () {
@@ -54,7 +59,7 @@ describe('Test images url endpoints', () => {
         const thumbPath = path_1.default.join(__dirname, '../../assets/thumb/abc_200_300.jpg');
         (0, index_2.transform)(fullPath, 200, 300, thumbPath)
             .catch((reject) => {
-            expect(reject).toContain("Error: Input file is missing ");
+            expect(reject).toContain("Error: Input file is missing:");
         });
     }));
 });

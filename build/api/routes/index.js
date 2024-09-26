@@ -27,7 +27,6 @@ routes.get('/', errorhandler_1.default, (req, resp) => {
     const newFilePath = path_1.default.join(__dirname, '../../../assets/thumb/', `${fileName}_${width}_${height}.jpg`);
     fs_1.default.access(newFilePath, fs_1.default.constants.F_OK, (err) => {
         if (!err) {
-            console.log("came here to resolve");
             resp.status(200).sendFile(newFilePath); // File exists and is accessible
         }
         else {

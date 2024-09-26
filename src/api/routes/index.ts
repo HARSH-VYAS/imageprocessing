@@ -1,10 +1,8 @@
 import express from 'express';
 import sharp from 'sharp';
-import path, { resolve } from 'path';
+import path from 'path';
 import fs from 'fs';
-import RootPath from 'app-root-path';
-import handleError from '../../helper/errorhandler'
-import { reject } from 'lodash';
+import handleError from '../../helper/errorhandler';
 
 const routes = express.Router();
 
